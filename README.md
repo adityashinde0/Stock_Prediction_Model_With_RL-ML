@@ -3,7 +3,8 @@ title: Stock Prediction Model With RL-ML
 emoji: 📈
 colorFrom: blue
 colorTo: purple
-sdk: docker
+sdk: gradio
+app_file: app.py
 pinned: false
 ---
 
