@@ -1,0 +1,26 @@
+# --- Deep Learning & Computer Vision ---
+torch>=2.0.0
+torchvision>=0.15.0
+opencv-python-headless>=4.8.0
+easyocr>=1.7.0
+Pillow>=10.0.0
+
+# --- Quantitative Data & Technical Analysis ---
+yfinance>=0.2.28
+ccxt>=4.0.0
+ta>=0.10.2
+pandas>=2.0.0
+numpy>=1.24.0
+scikit-learn>=1.3.0
+xgboost>=1.7.0
+
+# --- Plotting & Visualizations ---
+plotly>=5.15.0
+matplotlib>=3.7.0
+seaborn>=0.12.0
+
+# --- Web UI & Deployment ---
+gradio>=4.0.0
+
+# --- Testing & Code Quality ---
+pytest>=7.4.0
