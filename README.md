@@ -1,6 +1,6 @@
 # 📈 Stock Vision Predictor - Multi-Modal AI Trading Assistant
 
-[![CI/CD Testing Pipeline](https://github.com/YourUsername/Stock-Vision-Predictor/actions/workflows/ci.yml/badge.svg)](https://github.com/YourUsername/Stock-Vision-Predictor/actions)
+[![CI/CD Testing Pipeline](https://github.com/adityashinde0/Stock_Prediction_Model_With_RL-ML/actions/workflows/ci.yml/badge.svg)](https://github.com/adityashinde0/Stock_Prediction_Model_With_RL-ML/actions)
 [![Python 3.10 | 3.11 | 3.12](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12-blue.svg)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Gradio UI](https://img.shields.io/badge/UI-Gradio_4.0%2B-orange.svg)](https://gradio.app/)
