@@ -24,3 +24,4 @@ gradio>=4.0.0
 
 # --- Testing & Code Quality ---
 pytest>=7.4.0
+spaces

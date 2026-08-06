@@ -14,6 +14,15 @@ import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
+try:
+    import spaces
+except ImportError:
+    # Safe fallback for local Windows execution where 'spaces' may not be installed
+    class spaces:
+        @staticmethod
+        def GPU(func):
+            return func
+
 from src.backtester.accuracy import AccuracyEvaluator
 from src.backtester.metrics import StrategyBacktester
 from src.config import DEFAULT_TICKER, DEFAULT_TIMEFRAME, FALLBACK_TICKERS
@@ -443,6 +452,7 @@ def create_plotly_forecast_chart(
 # Main Pipeline
 # ---------------------------------------------------------------------------
 
+@spaces.GPU(duration=120)
 def analyze_chart_pipeline(
     image_input: Any,
     override_ticker: str,
