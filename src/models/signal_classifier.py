@@ -37,19 +37,20 @@ class SignalClassifier:
     def __init__(self, model_path: Optional[Path] = None):
         self.model_path = model_path or (MODELS_DIR / "signal_classifier.pkl")
         self.feature_cols = [
-            "EMA7",
-            "EMA21",
-            "EMA50",
-            "EMA200",
-            "MACD_line",
-            "MACD_signal",
-            "MACD_diff",
-            "RSI",
+            # Trend
+            "EMA7", "EMA21", "EMA50", "EMA200",
+            # Momentum
+            "MACD_line", "MACD_signal", "MACD_diff", "RSI",
+            # Volume
             "OBV",
-            "BBH",
-            "BBL",
-            "BB_width",
-            "Return",
+            # Volatility
+            "BBH", "BBL", "BB_width", "RealizedVol", "ATR_norm",
+            # Return
+            "Return", "LogReturn",
+            # Regime
+            "DistEMA200",
+            # Seasonality (cyclical sine/cosine encoding)
+            "DayOfWeek_sin", "DayOfWeek_cos", "Month_sin", "Month_cos",
         ]
         self.model = None
 
