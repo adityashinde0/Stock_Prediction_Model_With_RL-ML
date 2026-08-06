@@ -1,3 +1,12 @@
+---
+title: Stock Prediction Model With RL-ML
+emoji: 📈
+colorFrom: blue
+colorTo: purple
+sdk: docker
+pinned: false
+---
+
 <div align="center">
   <h1>📈 Stock Prediction Model with RL & ML</h1>
   <p>
