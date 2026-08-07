@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Stock Vision Predictor - Main Web Application
 Gradio Interface that combines OCR chart reading, live market data ingestion,
@@ -17,11 +18,18 @@ from plotly.subplots import make_subplots
 try:
     import spaces
 except ImportError:
-    # Safe fallback for local Windows execution where 'spaces' may not be installed
+    # Safe fallback for local Windows execution where 'spaces' may not be installed.
+    # GPU() must accept any args/kwargs (e.g. duration=120) and return the function unchanged.
     class spaces:
         @staticmethod
-        def GPU(func):
-            return func
+        def GPU(*args, **kwargs):
+            # Called as @spaces.GPU(duration=120) → returns a no-op decorator
+            # Called as @spaces.GPU → args[0] is the function itself
+            def decorator(func):
+                return func
+            if len(args) == 1 and callable(args[0]) and not kwargs:
+                return args[0]   # bare @spaces.GPU usage
+            return decorator     # @spaces.GPU(...) usage
 
 from src.backtester.accuracy import AccuracyEvaluator
 from src.backtester.metrics import StrategyBacktester
@@ -613,34 +621,311 @@ def analyze_chart_pipeline(
 
 
 # ---------------------------------------------------------------------------
+# Custom CSS — Premium Dark Terminal Aesthetic
+# ---------------------------------------------------------------------------
+
+CUSTOM_CSS = """
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+/* ── Global reset to Inter ───────────────────────────────────────────── */
+*, body, .gradio-container {
+    font-family: 'Inter', system-ui, sans-serif !important;
+}
+
+/* ── Root background ─────────────────────────────────────────────────── */
+.gradio-container {
+    background: #0d0f14 !important;
+    max-width: 1600px !important;
+    margin: 0 auto !important;
+}
+
+/* ── App header ──────────────────────────────────────────────────────── */
+#app-header h1 {
+    font-size: 1.65rem !important;
+    font-weight: 800 !important;
+    background: linear-gradient(135deg, #f97316 0%, #facc15 100%) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    letter-spacing: -0.02em;
+    margin-bottom: 2px !important;
+}
+#app-header p, #app-header em {
+    color: #64748b !important;
+    font-size: 0.88rem !important;
+    line-height: 1.55 !important;
+}
+
+/* ── Panel cards ─────────────────────────────────────────────────────── */
+.panel-card {
+    border: 1px solid rgba(255,255,255,0.07) !important;
+    border-radius: 16px !important;
+    background: rgba(18, 20, 28, 0.85) !important;
+    padding: 20px !important;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.4) !important;
+    backdrop-filter: blur(12px) !important;
+}
+
+/* ── Section mini-headers ────────────────────────────────────────────── */
+.section-label .prose p {
+    color: #475569 !important;
+    font-size: 0.72rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.12em !important;
+    text-transform: uppercase !important;
+    margin: 0 0 10px 0 !important;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    padding-bottom: 6px;
+}
+
+/* ── Analyze button — gradient glow ─────────────────────────────────── */
+#analyze-btn {
+    background: linear-gradient(135deg, #f97316 0%, #ef4444 100%) !important;
+    border: none !important;
+    box-shadow: 0 0 22px rgba(249,115,22,0.38), 0 2px 8px rgba(0,0,0,0.4) !important;
+    font-size: 1rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.04em !important;
+    border-radius: 10px !important;
+    transition: box-shadow 0.25s ease, transform 0.15s ease !important;
+    margin-top: 8px !important;
+}
+#analyze-btn:hover {
+    box-shadow: 0 0 38px rgba(249,115,22,0.60), 0 4px 16px rgba(0,0,0,0.5) !important;
+    transform: translateY(-1px) !important;
+}
+
+/* ── Sanity banner ───────────────────────────────────────────────────── */
+#sanity-banner .prose p {
+    padding: 10px 16px !important;
+    border-radius: 10px !important;
+    background: rgba(245,158,11,0.08) !important;
+    border-left: 3px solid #f59e0b !important;
+    font-size: 0.85rem !important;
+    color: #fbbf24 !important;
+    margin: 0 !important;
+}
+
+/* ── Signal zone ─────────────────────────────────────────────────────── */
+#signal-zone {
+    border: 1px solid rgba(255,255,255,0.07) !important;
+    border-radius: 14px !important;
+    background: rgba(18, 20, 28, 0.9) !important;
+    padding: 18px 20px !important;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.35) !important;
+    position: relative;
+    overflow: hidden;
+}
+#signal-zone::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #f97316, #ef4444, #8b5cf6);
+    border-radius: 14px 14px 0 0;
+}
+#signal-zone .prose h3 {
+    font-size: 1.3rem !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.01em !important;
+    margin: 0 !important;
+    line-height: 1.4 !important;
+}
+
+/* ── Metadata zone ───────────────────────────────────────────────────── */
+#metadata-zone {
+    border: 1px solid rgba(255,255,255,0.07) !important;
+    border-radius: 14px !important;
+    background: rgba(18, 20, 28, 0.9) !important;
+    padding: 18px 20px !important;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.35) !important;
+}
+#metadata-zone .prose p {
+    font-size: 0.88rem !important;
+    color: #94a3b8 !important;
+    line-height: 1.7 !important;
+    margin: 0 !important;
+}
+#metadata-zone .prose strong {
+    color: #e2e8f0 !important;
+}
+#metadata-zone .prose code {
+    background: rgba(255,255,255,0.08) !important;
+    color: #38bdf8 !important;
+    border-radius: 4px !important;
+    padding: 1px 5px !important;
+    font-size: 0.83rem !important;
+}
+
+/* ── Risk card ───────────────────────────────────────────────────────── */
+#risk-card {
+    border: 1px solid rgba(255,255,255,0.07) !important;
+    border-radius: 14px !important;
+    background: rgba(18, 20, 28, 0.9) !important;
+    padding: 18px 20px !important;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.35) !important;
+}
+#risk-card .prose h3 {
+    font-size: 0.95rem !important;
+    font-weight: 700 !important;
+    color: #94a3b8 !important;
+    margin-bottom: 10px !important;
+}
+#risk-card .prose table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+}
+#risk-card .prose td, #risk-card .prose th {
+    padding: 8px 12px !important;
+    font-size: 0.88rem !important;
+    border-bottom: 1px solid rgba(255,255,255,0.05) !important;
+}
+#risk-card .prose td:first-child {
+    color: #64748b !important;
+    font-weight: 500 !important;
+}
+#risk-card .prose td:last-child {
+    color: #e2e8f0 !important;
+    font-weight: 600 !important;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace !important;
+}
+
+/* ── Chart container ─────────────────────────────────────────────────── */
+#chart-container {
+    border: 1px solid rgba(255,255,255,0.07) !important;
+    border-radius: 14px !important;
+    overflow: hidden !important;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.4) !important;
+}
+#chart-container .plot-container {
+    border-radius: 14px !important;
+}
+
+/* ── Backtest accordion ──────────────────────────────────────────────── */
+#backtest-accordion {
+    border: 1px solid rgba(255,255,255,0.06) !important;
+    border-radius: 12px !important;
+    background: rgba(18, 20, 28, 0.7) !important;
+    overflow: hidden !important;
+}
+#backtest-accordion .label-wrap {
+    padding: 12px 16px !important;
+    font-size: 0.88rem !important;
+    font-weight: 600 !important;
+    color: #64748b !important;
+}
+#backtest-accordion .prose {
+    font-size: 0.87rem !important;
+    line-height: 1.7 !important;
+    padding: 4px 4px 8px 4px !important;
+}
+#backtest-accordion .prose code {
+    background: rgba(255,255,255,0.08) !important;
+    color: #38bdf8 !important;
+    border-radius: 4px !important;
+    padding: 1px 5px !important;
+}
+
+/* ── Input image widget ──────────────────────────────────────────────── */
+.input-image-wrap {
+    border-radius: 12px !important;
+    overflow: hidden !important;
+}
+
+/* ── Checkbox group ──────────────────────────────────────────────────── */
+.overlay-checks label {
+    font-size: 0.85rem !important;
+    color: #94a3b8 !important;
+}
+
+/* ── Accordion (overrides panel) ─────────────────────────────────────── */
+.overrides-accordion {
+    border: 1px solid rgba(255,255,255,0.06) !important;
+    border-radius: 10px !important;
+    margin-bottom: 10px !important;
+}
+
+/* ── Divider row spacing ─────────────────────────────────────────────── */
+.output-row {
+    gap: 12px !important;
+}
+
+/* ── Footer credit ───────────────────────────────────────────────────── */
+#app-footer {
+    text-align: center !important;
+    padding: 18px 0 8px 0 !important;
+    border-top: 1px solid rgba(255,255,255,0.05) !important;
+    margin-top: 8px !important;
+}
+#app-footer .prose p {
+    color: #334155 !important;
+    font-size: 0.78rem !important;
+    font-weight: 500 !important;
+    letter-spacing: 0.06em !important;
+    margin: 0 !important;
+}
+#app-footer .prose strong {
+    background: linear-gradient(135deg, #f97316, #facc15) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    font-weight: 700 !important;
+}
+"""
+
+# ---------------------------------------------------------------------------
 # Gradio UI Layout
 # ---------------------------------------------------------------------------
 
 def build_gradio_ui() -> gr.Blocks:
     """
-    Constructs a clean, professional two-column web dashboard.
-    Universally compatible across Gradio versions — no deprecated arguments.
-    """
-    with gr.Blocks(title="Stock Vision Predictor") as demo:
-        gr.Markdown(
-            """
-            # 📈 Stock Vision Predictor — Multi-Modal AI Trading Assistant
-            *Upload any TradingView or candlestick chart screenshot. The AI extracts the Ticker and
-            Interval via OCR, syncs institutional market data, predicts the **Trading Action Signal**,
-            and projects a **14-period future price trajectory** with confidence intervals.*
-            """
-        )
+    Constructs a premium 3-zone dark terminal dashboard.
 
-        with gr.Row():
-            # ── LEFT COLUMN: Inputs & Controls ──────────────────────────────
-            with gr.Column(scale=4):
-                gr.Markdown("### 1️⃣ Input Chart Screenshot & Controls")
+    Zone A (Left 30%) — Inputs & Controls: image upload, manual overrides,
+                         EMA overlay toggles, and the primary analyze button.
+    Zone B (Right 70%) — Outputs: sanity banner, signal+metadata row,
+                          risk management card, institutional chart, backtesting.
+
+    All pipeline logic and output wiring remain completely unchanged.
+    """
+    with gr.Blocks(
+        title="Stock Vision Predictor",
+    ) as demo:
+
+        # Inject custom CSS via HTML style tag (Gradio 6 compatible)
+        gr.HTML(f"<style>{CUSTOM_CSS}</style>", visible=True)
+
+        # ── HEADER ────────────────────────────────────────────────────────────
+        with gr.Row(elem_id="app-header"):
+            gr.Markdown(
+                """
+                # 📈 Stock Vision Predictor — Multi-Modal AI Trading Assistant
+                *Upload any TradingView or candlestick chart screenshot. The AI extracts the Ticker and
+                Interval via OCR, syncs institutional market data, predicts the **Trading Action Signal**,
+                and projects a **14-period future price trajectory** with confidence intervals.*
+                """
+            )
+
+        # ── MAIN LAYOUT ───────────────────────────────────────────────────────
+        with gr.Row(equal_height=False):
+
+            # ════════════════════════════════════════════════════════════════
+            # ZONE A — LEFT PANEL: Inputs & Controls
+            # ════════════════════════════════════════════════════════════════
+            with gr.Column(scale=3, elem_classes="panel-card"):
+
+                gr.Markdown("INPUT & CONTROLS", elem_classes="section-label")
+
                 image_input = gr.Image(
                     label="Upload TradingView Screenshot (Drag & Drop)",
                     type="numpy",
+                    height=240,
+                    elem_classes="input-image-wrap",
                 )
 
-                with gr.Accordion("⚙️ Manual Overrides (Optional)", open=False):
+                with gr.Accordion(
+                    "⚙️ Manual Overrides (Optional)",
+                    open=False,
+                    elem_classes="overrides-accordion",
+                ):
                     override_ticker = gr.Dropdown(
                         choices=["AUTO-DETECT"] + FALLBACK_TICKERS,
                         value="AUTO-DETECT",
@@ -652,42 +937,70 @@ def build_gradio_ui() -> gr.Blocks:
                         label="Override Timeframe Interval",
                     )
 
-                gr.Markdown("### 📊 Chart Indicator Overlays")
+                gr.Markdown("CHART OVERLAYS", elem_classes="section-label")
                 overlay_checks = gr.CheckboxGroup(
-                    choices=["EMA20", "EMA50"],   # RSI always-on in Row 2
+                    choices=["EMA20", "EMA50"],
                     value=[],
                     label="Select EMA overlays to render on the chart",
                     info="RSI (14) is permanently shown in the bottom subplot.",
+                    elem_classes="overlay-checks",
                 )
 
                 submit_btn = gr.Button(
                     "🚀 Analyze Chart & Forecast Trajectory",
                     variant="primary",
                     size="lg",
+                    elem_id="analyze-btn",
                 )
 
-            # ── RIGHT COLUMN: Outputs & Visualizations ───────────────────────
-            with gr.Column(scale=8):
-                gr.Markdown("### 2️⃣ AI Prediction & Forecast Dashboard")
+            # ════════════════════════════════════════════════════════════════
+            # ZONE B — RIGHT PANEL: AI Outputs & Visualization
+            # ════════════════════════════════════════════════════════════════
+            with gr.Column(scale=7):
 
-                # OCR price sanity banner
-                sanity_output = gr.Markdown("")
+                # ── B1: OCR Sanity Banner (conditional, top of outputs) ──────
+                sanity_output = gr.Markdown("", elem_id="sanity-banner")
 
-                signal_output = gr.Markdown("### 🚨 PREDICTED SIGNAL: *Awaiting Analysis...*")
-                metadata_output = gr.Markdown("*Upload an image and click Analyze to begin.*")
+                # ── B2 + B3: Signal Badge & Market Metadata — side by side ──
+                with gr.Row(elem_classes="output-row"):
 
-                # Risk Management Card
+                    # B2: Signal badge (wider)
+                    with gr.Column(scale=6):
+                        signal_output = gr.Markdown(
+                            "### 🚨 PREDICTED SIGNAL: *Awaiting Analysis...*",
+                            elem_id="signal-zone",
+                        )
+
+                    # B3: Metadata card (narrower)
+                    with gr.Column(scale=4):
+                        metadata_output = gr.Markdown(
+                            "*Upload an image and click Analyze to begin.*",
+                            elem_id="metadata-zone",
+                        )
+
+                # ── B4: Risk Management Card ─────────────────────────────────
                 risk_output = gr.Markdown(
-                    "### 🛡️ Risk Management Levels\n*Run analysis to calculate SL/TP/R:R.*"
+                    "### 🛡️ Risk Management Levels\n*Run analysis to calculate SL / TP / R:R.*",
+                    elem_id="risk-card",
                 )
 
-                # Institutional Terminal Chart
-                forecast_chart = gr.Plot(label="Institutional Forecast Terminal")
+                # ── B5: Institutional Forecast Chart (full-width, prominent) ─
+                forecast_chart = gr.Plot(
+                    label="Institutional Forecast Terminal",
+                    elem_id="chart-container",
+                )
 
-                with gr.Accordion("📑 Local Backtesting KPIs & Probability Report", open=True):
-                    backtest_output = gr.Markdown("*Strategy backtest metrics will appear here.*")
+                # ── B6: Backtesting KPIs (collapsed — cleaner default view) ──
+                with gr.Accordion(
+                    "📑 Local Backtesting KPIs & Probability Report",
+                    open=False,
+                    elem_id="backtest-accordion",
+                ):
+                    backtest_output = gr.Markdown(
+                        "*Strategy backtest metrics will appear here after analysis.*"
+                    )
 
-        # ── Button Click Wiring ──────────────────────────────────────────────
+        # ── BUTTON CLICK WIRING (unchanged) ──────────────────────────────────
         submit_btn.click(
             fn=analyze_chart_pipeline,
             inputs=[image_input, override_ticker, override_tf, overlay_checks],
@@ -700,6 +1013,10 @@ def build_gradio_ui() -> gr.Blocks:
                 sanity_output,
             ],
         )
+
+        # ── FOOTER ────────────────────────────────────────────────────────────
+        with gr.Row(elem_id="app-footer"):
+            gr.Markdown("Created by **aDi** · Stock Vision Predictor")
 
     return demo
 
